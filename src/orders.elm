@@ -33,20 +33,15 @@ type alias Order =
     }
 
 
-
--- TODO: Get rid of NewOrder type and just set newName and newOrder right on the model?
-
-
 type alias Model =
-    { newName : String
-    , newOrder : String
+    { newOrder : NewOrder
     , orders : List Order
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "TestName" "" [], Cmd.none )
+    ( Model { name = "", order = "" } [], Cmd.none )
 
 
 
@@ -64,18 +59,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Add ->
-            -- TODO: Use the name from the model here
-            ( Model model.newName model.newOrder ({ id = 1, name = model.newName, order = model.newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
+            ( Model { name = model.newOrder.name, order = model.newOrder.order } ({ id = 1, name = model.newOrder.name, order = model.newOrder.order, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
-        -- ( Model model.newOrder ({ id = 1, name = orderToAdd.name, order = orderToAdd.order, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
         Remove orderId ->
             ( model, Cmd.none )
 
+        -- TODO: Do this is a prettier (more concise) way (without duplication)?
         AddedName addedName ->
-            ( { model | newName = addedName }, Cmd.none )
+            let
+                updatedModel =
+                    model.newOrder
+            in
+                ( { model | newOrder = { updatedModel | name = addedName } }, Cmd.none )
 
         AddedOrder addedOrder ->
-            ( { model | newOrder = addedOrder }, Cmd.none )
+            let
+                updatedModel =
+                    model.newOrder
+            in
+                ( { model | newOrder = { updatedModel | order = addedOrder } }, Cmd.none )
 
 
 
@@ -94,7 +96,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text (model.newOrder) ]
+        [ h1 [] [ text (model.newOrder.order) ]
         , h2 [] [ text (toString (List.length model.orders)) ]
         , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ o.order) ]) model.orders)
         , input [ type_ "text", placeholder "Name", onInput AddedName ] []
