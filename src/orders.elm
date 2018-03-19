@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 
 
@@ -32,15 +33,20 @@ type alias Order =
     }
 
 
+
+-- TODO: Get rid of NewOrder type and just set newName and newOrder right on the model?
+
+
 type alias Model =
-    { newOrder : NewOrder
+    { newName : String
+    , newOrder : String
     , orders : List Order
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model { name = "TestName", order = "" } [], Cmd.none )
+    ( Model "TestName" "" [], Cmd.none )
 
 
 
@@ -48,18 +54,28 @@ init =
 
 
 type Msg
-    = Add NewOrder
+    = Add
     | Remove Int
+    | AddedName String
+    | AddedOrder String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Add orderToAdd ->
-            ( Model model.newOrder ({ id = 1, name = orderToAdd.name, order = orderToAdd.order, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
+        Add ->
+            -- TODO: Use the name from the model here
+            ( Model model.newName model.newOrder ({ id = 1, name = model.newName, order = model.newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
+        -- ( Model model.newOrder ({ id = 1, name = orderToAdd.name, order = orderToAdd.order, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
         Remove orderId ->
             ( model, Cmd.none )
+
+        AddedName addedName ->
+            ( { model | newName = addedName }, Cmd.none )
+
+        AddedOrder addedOrder ->
+            ( { model | newOrder = addedOrder }, Cmd.none )
 
 
 
@@ -78,8 +94,10 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text (model.newOrder.name) ]
+        [ h1 [] [ text (model.newOrder) ]
         , h2 [] [ text (toString (List.length model.orders)) ]
         , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ o.order) ]) model.orders)
-        , button [ onClick (Add { name = "New", order = "Order" }) ] [ text "Add" ]
+        , input [ type_ "text", placeholder "Name", onInput AddedName ] []
+        , input [ type_ "text", placeholder "Order", onInput AddedOrder ] []
+        , button [ onClick Add ] [ text "Add" ]
         ]
