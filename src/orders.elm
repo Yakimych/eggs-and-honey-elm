@@ -19,12 +19,6 @@ main =
 -- MODEL
 
 
-type alias NewOrder =
-    { name : String
-    , order : String
-    }
-
-
 type alias Order =
     { id : Int
     , name : String
@@ -34,14 +28,15 @@ type alias Order =
 
 
 type alias Model =
-    { newOrder : NewOrder
+    { newName : String
+    , newOrder : String
     , orders : List Order
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model { name = "", order = "" } [], Cmd.none )
+    ( Model "" "" [], Cmd.none )
 
 
 
@@ -59,25 +54,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Add ->
-            ( Model { name = model.newOrder.name, order = model.newOrder.order } ({ id = 1, name = model.newOrder.name, order = model.newOrder.order, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
+            ( Model model.newName model.newOrder ({ id = 1, name = model.newName, order = model.newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
         Remove orderId ->
             ( model, Cmd.none )
 
-        -- TODO: Do this is a prettier (more concise) way (without duplication)?
         AddedName addedName ->
-            let
-                updatedModel =
-                    model.newOrder
-            in
-                ( { model | newOrder = { updatedModel | name = addedName } }, Cmd.none )
+            ( { model | newName = addedName }, Cmd.none )
 
         AddedOrder addedOrder ->
-            let
-                updatedModel =
-                    model.newOrder
-            in
-                ( { model | newOrder = { updatedModel | order = addedOrder } }, Cmd.none )
+            ( { model | newOrder = addedOrder }, Cmd.none )
 
 
 
@@ -96,7 +82,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text (model.newOrder.order) ]
+        [ h1 [] [ text (model.newOrder) ]
         , h2 [] [ text (toString (List.length model.orders)) ]
         , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ o.order) ]) model.orders)
         , input [ type_ "text", placeholder "Name", onInput AddedName ] []
