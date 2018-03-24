@@ -54,7 +54,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Add ->
-            ( Model model.newName model.newOrder ({ id = 1, name = model.newName, order = model.newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
+            ( Model "" model.newOrder ({ id = 1, name = model.newName, order = model.newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
         Remove orderId ->
             ( model, Cmd.none )
@@ -85,7 +85,7 @@ view model =
         [ h1 [] [ text (model.newOrder) ]
         , h2 [] [ text (toString (List.length model.orders)) ]
         , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ o.order) ]) model.orders)
-        , input [ type_ "text", placeholder "Name", onInput AddedName ] []
+        , input [ type_ "text", placeholder "Name", value model.newName, onInput AddedName ] []
         , input [ type_ "text", placeholder "Order", onInput AddedOrder ] []
         , button [ onClick Add ] [ text "Add" ]
         ]
