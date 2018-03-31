@@ -20,4 +20,38 @@ suite =
             , test "returns True if name is empty string" <|
                 \_ -> Expect.true "Expected to not be able to add the order with empty Name" (canAddOrder "SomeName" (Just Honey))
             ]
+        , describe "filterOrders"
+            [ test "returns all orders if no order is selected" <|
+                \_ ->
+                    let
+                        orderList =
+                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
+                            ]
+                    in
+                        Expect.equalLists orderList (filterOrders orderList Nothing)
+            , test "returns only orders for Honey if Honey is selected" <|
+                \_ ->
+                    let
+                        orderList =
+                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
+                            , { id = 3, name = "TestName3", order = Eggs, datePlaced = "2014-01-01" }
+                            , { id = 4, name = "TestName4", order = Honey, datePlaced = "2014-01-01" }
+                            ]
+                    in
+                        Expect.true "Expected only to find orders for Honey in the list" ((filterOrders orderList (Just Honey)) |> List.all (\o -> o.order == Honey))
+            , test "returns only orders for Eggs if Eggs are selected" <|
+                \_ ->
+                    let
+                        orderList =
+                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
+                            , { id = 3, name = "TestName3", order = Eggs, datePlaced = "2014-01-01" }
+                            , { id = 4, name = "TestName4", order = Honey, datePlaced = "2014-01-01" }
+                            , { id = 5, name = "TestName5", order = Eggs, datePlaced = "2014-01-01" }
+                            ]
+                    in
+                        Expect.true "Expected only to find orders for Eggs in the list" ((filterOrders orderList (Just Eggs)) |> List.all (\o -> o.order == Eggs))
+            ]
         ]

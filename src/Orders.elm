@@ -3,6 +3,7 @@ module Orders exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import List exposing (length, append, filter)
 import Result.Extra exposing (isOk)
 
 
@@ -92,7 +93,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok ( newName, newOrder ) ->
-                    ( Model "" model.newOrder ({ id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
+                    ( Model "" model.newOrder (append model.orders [ { id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } ]), Cmd.none )
 
         UpdateName updatedName ->
             ( { model | newName = updatedName }, Cmd.none )
@@ -122,13 +123,23 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h2 [] [ text (toString (List.length model.orders)) ]
-        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderToString o.order)) ]) model.orders)
+        [ h2 [] [ text (toString (length model.orders)) ]
+        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderToString o.order)) ]) (filterOrders model.orders model.newOrder))
         , input [ type_ "text", placeholder "Name", value model.newName, onInput UpdateName ] []
         , orderButton model.newOrder Eggs
         , orderButton model.newOrder Honey
         , button [ onClick Add, disabled (not <| canAddOrder model.newName model.newOrder) ] [ text "Add" ]
         ]
+
+
+filterOrders : List Order -> Maybe OrderType -> List Order
+filterOrders allOrders maybeSelectedOrder =
+    case maybeSelectedOrder of
+        Nothing ->
+            allOrders
+
+        Just selectedOrder ->
+            allOrders |> filter (\o -> o.order == selectedOrder)
 
 
 orderButton : Maybe OrderType -> OrderType -> Html Msg
