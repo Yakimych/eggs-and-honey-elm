@@ -3,6 +3,7 @@ module Orders exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Result.Extra exposing (isOk)
 
 
 main : Program Never Model Msg
@@ -34,19 +35,6 @@ orderToString order =
             "Honey"
 
 
-maybeOrderFromString : String -> Maybe OrderType
-maybeOrderFromString orderString =
-    case orderString of
-        "Eggs" ->
-            Just Eggs
-
-        "Honey" ->
-            Just Honey
-
-        _ ->
-            Nothing
-
-
 type alias Order =
     { id : Int
     , name : String
@@ -73,22 +61,11 @@ init =
 
 type Msg
     = Add
-    | Remove Int
-    | AddedName String
-    | AddedOrder String
+    | UpdateName String
+    | ToggleOrderType OrderType
 
 
-toBool : Result a b -> Bool
-toBool eitherValue =
-    case eitherValue of
-        Ok _ ->
-            True
-
-        Err _ ->
-            False
-
-
-validateNewOrder : String -> Maybe a -> Result () ( String, a )
+validateNewOrder : String -> Maybe OrderType -> Result () ( String, OrderType )
 validateNewOrder name order =
     case ( name, order ) of
         ( "", _ ) ->
@@ -101,9 +78,9 @@ validateNewOrder name order =
             Ok ( name, order )
 
 
-canAddOrder : String -> Maybe a -> Bool
+canAddOrder : String -> Maybe OrderType -> Bool
 canAddOrder name order =
-    validateNewOrder name order |> toBool
+    validateNewOrder name order |> isOk
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -117,14 +94,16 @@ update msg model =
                 Ok ( newName, newOrder ) ->
                     ( Model "" model.newOrder ({ id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
-        Remove orderId ->
-            ( model, Cmd.none )
+        UpdateName updatedName ->
+            ( { model | newName = updatedName }, Cmd.none )
 
-        AddedName addedName ->
-            ( { model | newName = addedName }, Cmd.none )
+        ToggleOrderType newOrderType ->
+            case (Just newOrderType) == model.newOrder of
+                True ->
+                    ( { model | newOrder = Nothing }, Cmd.none )
 
-        AddedOrder addedOrder ->
-            ( { model | newOrder = maybeOrderFromString addedOrder }, Cmd.none )
+                False ->
+                    ( { model | newOrder = Just newOrderType }, Cmd.none )
 
 
 
@@ -145,7 +124,28 @@ view model =
     div []
         [ h2 [] [ text (toString (List.length model.orders)) ]
         , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderToString o.order)) ]) model.orders)
-        , input [ type_ "text", placeholder "Name", value model.newName, onInput AddedName ] []
-        , input [ type_ "text", placeholder "Order", onInput AddedOrder ] []
+        , input [ type_ "text", placeholder "Name", value model.newName, onInput UpdateName ] []
+        , orderButton model.newOrder Eggs
+        , orderButton model.newOrder Honey
         , button [ onClick Add, disabled (not <| canAddOrder model.newName model.newOrder) ] [ text "Add" ]
         ]
+
+
+orderButton : Maybe OrderType -> OrderType -> Html Msg
+orderButton existingOrderType orderType =
+    button
+        [ onClick (ToggleOrderType orderType)
+        , style (orderButtonStyle existingOrderType (Just orderType))
+        ]
+        [ text (orderToString orderType)
+        ]
+
+
+orderButtonStyle : a -> a -> List ( String, String )
+orderButtonStyle currentOrderType newOrderType =
+    if currentOrderType == newOrderType then
+        [ ( "border-color", "red" )
+        , ( "border-width", "2px" )
+        ]
+    else
+        []
