@@ -78,32 +78,27 @@ type Msg
     | AddedOrder String
 
 
-type Either a b
-    = Left a
-    | Right b
-
-
-toBool : Either a b -> Bool
+toBool : Result a b -> Bool
 toBool eitherValue =
     case eitherValue of
-        Left _ ->
+        Ok _ ->
             True
 
-        Right _ ->
+        Err _ ->
             False
 
 
-validateNewOrder : String -> Maybe a -> Either ( String, a ) ()
+validateNewOrder : String -> Maybe a -> Result () ( String, a )
 validateNewOrder name order =
     case ( name, order ) of
         ( "", _ ) ->
-            Right ()
+            Err ()
 
         ( _, Nothing ) ->
-            Right ()
+            Err ()
 
         ( name, Just order ) ->
-            Left ( name, order )
+            Ok ( name, order )
 
 
 canAddOrder : String -> Maybe a -> Bool
@@ -116,10 +111,10 @@ update msg model =
     case msg of
         Add ->
             case validateNewOrder model.newName model.newOrder of
-                Right () ->
+                Err () ->
                     ( model, Cmd.none )
 
-                Left ( newName, newOrder ) ->
+                Ok ( newName, newOrder ) ->
                     ( Model "" model.newOrder ({ id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } :: model.orders), Cmd.none )
 
         Remove orderId ->
