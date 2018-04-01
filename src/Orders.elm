@@ -5,6 +5,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List exposing (length, append, filter)
 import Result.Extra exposing (isOk)
+import Http
+import Json.Decode as Decode
 
 
 main : Program Never Model Msg
@@ -53,7 +55,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" Nothing [], Cmd.none )
+    ( Model "" Nothing [], loadOrders Load )
 
 
 
@@ -62,6 +64,7 @@ init =
 
 type Msg
     = Add
+    | Load (Result Http.Error (List Order))
     | UpdateName String
     | ToggleOrderType OrderType
 
@@ -95,6 +98,12 @@ update msg model =
                 Ok ( newName, newOrder ) ->
                     ( Model "" model.newOrder (append model.orders [ { id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } ]), Cmd.none )
 
+        Load (Ok loadedOrders) ->
+            ( { model | orders = loadedOrders }, Cmd.none )
+
+        Load (Err _) ->
+            ( model, Cmd.none )
+
         UpdateName updatedName ->
             ( { model | newName = updatedName }, Cmd.none )
 
@@ -105,6 +114,38 @@ update msg model =
 
                 False ->
                     ( { model | newOrder = Just newOrderType }, Cmd.none )
+
+
+loadOrders : (Result Http.Error (List Order) -> msg) -> Cmd msg
+loadOrders callback =
+    Http.send callback <| Http.get "http://localhost:5000/api/v1/orders" decodeOrders
+
+
+decodeOrders : Decode.Decoder (List Order)
+decodeOrders =
+    Decode.at [ "items" ] (Decode.list decodeOrder)
+
+
+decodeOrder : Decode.Decoder Order
+decodeOrder =
+    Decode.map4 Order
+        (Decode.field "id" Decode.int)
+        (Decode.field "name" Decode.string)
+        (Decode.field "order" Decode.string
+            |> Decode.andThen
+                (\str ->
+                    case str of
+                        "Eggs" ->
+                            Decode.succeed Eggs
+
+                        "Honey" ->
+                            Decode.succeed Honey
+
+                        somethingElse ->
+                            Decode.fail <| "Unknown order type: " ++ somethingElse
+                )
+        )
+        (Decode.field "datePlaced" Decode.string)
 
 
 
