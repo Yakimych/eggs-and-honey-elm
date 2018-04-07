@@ -6,8 +6,9 @@ import Html.Events exposing (..)
 import List exposing (length, append, filter)
 import Result.Extra exposing (isOk)
 import Http
-import Json.Decode as Decode
 import Task
+import Model exposing (orderTypeToString, OrderType(..))
+import DataProvider exposing (..)
 
 
 main : Program Never Model Msg
@@ -24,33 +25,10 @@ main =
 -- MODEL
 
 
-type OrderType
-    = Eggs
-    | Honey
-
-
-orderTypeToString : OrderType -> String
-orderTypeToString order =
-    case order of
-        Eggs ->
-            "Eggs"
-
-        Honey ->
-            "Honey"
-
-
-type alias Order =
-    { id : Int
-    , name : String
-    , orderType : OrderType
-    , datePlaced : String
-    }
-
-
 type alias Model =
     { newName : String
     , newOrderType : Maybe OrderType
-    , orders : List Order
+    , orders : List Model.Order
     }
 
 
@@ -65,8 +43,8 @@ init =
 
 type Msg
     = RequestAdd
-    | ConfirmAdd Order
-    | Load (Result Http.Error (List Order))
+    | ConfirmAdd Model.Order
+    | Load (Result Http.Error (List Model.Order))
     | UpdateName String
     | ToggleOrderType OrderType
 
@@ -127,38 +105,6 @@ requestAddOrder orderName orderType =
         |> Task.perform identity
 
 
-loadOrders : (Result Http.Error (List Order) -> msg) -> Cmd msg
-loadOrders callback =
-    Http.send callback <| Http.get "http://localhost:5000/api/v1/orders" decodeOrders
-
-
-decodeOrders : Decode.Decoder (List Order)
-decodeOrders =
-    Decode.at [ "items" ] (Decode.list decodeOrder)
-
-
-decodeOrder : Decode.Decoder Order
-decodeOrder =
-    Decode.map4 Order
-        (Decode.field "id" Decode.int)
-        (Decode.field "name" Decode.string)
-        (Decode.field "order" Decode.string
-            |> Decode.andThen
-                (\str ->
-                    case str of
-                        "Eggs" ->
-                            Decode.succeed Eggs
-
-                        "Honey" ->
-                            Decode.succeed Honey
-
-                        somethingElse ->
-                            Decode.fail <| "Unknown order type: " ++ somethingElse
-                )
-        )
-        (Decode.field "datePlaced" Decode.string)
-
-
 
 -- SUBSCRIPTIONS
 
@@ -184,7 +130,7 @@ view model =
         ]
 
 
-filterOrders : List Order -> Maybe OrderType -> List Order
+filterOrders : List Model.Order -> Maybe OrderType -> List Model.Order
 filterOrders allOrders maybeSelectedOrderType =
     case maybeSelectedOrderType of
         Nothing ->
