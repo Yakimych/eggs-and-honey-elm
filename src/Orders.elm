@@ -7,6 +7,7 @@ import List exposing (length, append, filter)
 import Result.Extra exposing (isOk)
 import Http
 import Json.Decode as Decode
+import Task
 
 
 main : Program Never Model Msg
@@ -63,7 +64,8 @@ init =
 
 
 type Msg
-    = Add
+    = RequestAdd
+    | ConfirmAdd Order
     | Load (Result Http.Error (List Order))
     | UpdateName String
     | ToggleOrderType OrderType
@@ -90,13 +92,16 @@ canAddOrder name order =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Add ->
+        RequestAdd ->
             case validateNewOrder model.newName model.newOrder of
                 Err () ->
                     ( model, Cmd.none )
 
                 Ok ( newName, newOrder ) ->
-                    ( Model "" model.newOrder (append model.orders [ { id = 1, name = model.newName, order = newOrder, datePlaced = "2018-01-01" } ]), Cmd.none )
+                    ( model, requestAddOrder newName newOrder )
+
+        ConfirmAdd addedOrder ->
+            ( Model "" model.newOrder (append model.orders [ addedOrder ]), Cmd.none )
 
         Load (Ok loadedOrders) ->
             ( { model | orders = loadedOrders }, Cmd.none )
@@ -114,6 +119,12 @@ update msg model =
 
                 False ->
                     ( { model | newOrder = Just newOrderType }, Cmd.none )
+
+
+requestAddOrder : String -> OrderType -> Cmd Msg
+requestAddOrder orderName orderType =
+    Task.succeed (ConfirmAdd { id = 1, name = orderName, order = orderType, datePlaced = "2018-01-01" })
+        |> Task.perform identity
 
 
 loadOrders : (Result Http.Error (List Order) -> msg) -> Cmd msg
@@ -169,7 +180,7 @@ view model =
         , input [ type_ "text", placeholder "Name", value model.newName, onInput UpdateName ] []
         , orderButton model.newOrder Eggs
         , orderButton model.newOrder Honey
-        , button [ onClick Add, disabled (not <| canAddOrder model.newName model.newOrder) ] [ text "Add" ]
+        , button [ onClick RequestAdd, disabled (not <| canAddOrder model.newName model.newOrder) ] [ text "Add" ]
         ]
 
 
