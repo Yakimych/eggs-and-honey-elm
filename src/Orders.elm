@@ -29,8 +29,8 @@ type OrderType
     | Honey
 
 
-orderToString : OrderType -> String
-orderToString order =
+orderTypeToString : OrderType -> String
+orderTypeToString order =
     case order of
         Eggs ->
             "Eggs"
@@ -42,14 +42,14 @@ orderToString order =
 type alias Order =
     { id : Int
     , name : String
-    , order : OrderType
+    , orderType : OrderType
     , datePlaced : String
     }
 
 
 type alias Model =
     { newName : String
-    , newOrder : Maybe OrderType
+    , newOrderType : Maybe OrderType
     , orders : List Order
     }
 
@@ -72,36 +72,36 @@ type Msg
 
 
 validateNewOrder : String -> Maybe OrderType -> Result () ( String, OrderType )
-validateNewOrder name order =
-    case ( name, order ) of
+validateNewOrder name orderType =
+    case ( name, orderType ) of
         ( "", _ ) ->
             Err ()
 
         ( _, Nothing ) ->
             Err ()
 
-        ( name, Just order ) ->
-            Ok ( name, order )
+        ( name, Just orderType ) ->
+            Ok ( name, orderType )
 
 
 canAddOrder : String -> Maybe OrderType -> Bool
-canAddOrder name order =
-    validateNewOrder name order |> isOk
+canAddOrder name orderType =
+    validateNewOrder name orderType |> isOk
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAdd ->
-            case validateNewOrder model.newName model.newOrder of
+            case validateNewOrder model.newName model.newOrderType of
                 Err () ->
                     ( model, Cmd.none )
 
-                Ok ( newName, newOrder ) ->
-                    ( model, requestAddOrder newName newOrder )
+                Ok ( newName, newOrderType ) ->
+                    ( model, requestAddOrder newName newOrderType )
 
         ConfirmAdd addedOrder ->
-            ( Model "" model.newOrder (append model.orders [ addedOrder ]), Cmd.none )
+            ( Model "" model.newOrderType (append model.orders [ addedOrder ]), Cmd.none )
 
         Load (Ok loadedOrders) ->
             ( { model | orders = loadedOrders }, Cmd.none )
@@ -113,17 +113,17 @@ update msg model =
             ( { model | newName = updatedName }, Cmd.none )
 
         ToggleOrderType newOrderType ->
-            case (Just newOrderType) == model.newOrder of
+            case (Just newOrderType) == model.newOrderType of
                 True ->
-                    ( { model | newOrder = Nothing }, Cmd.none )
+                    ( { model | newOrderType = Nothing }, Cmd.none )
 
                 False ->
-                    ( { model | newOrder = Just newOrderType }, Cmd.none )
+                    ( { model | newOrderType = Just newOrderType }, Cmd.none )
 
 
 requestAddOrder : String -> OrderType -> Cmd Msg
 requestAddOrder orderName orderType =
-    Task.succeed (ConfirmAdd { id = 1, name = orderName, order = orderType, datePlaced = "2018-01-01" })
+    Task.succeed (ConfirmAdd { id = 1, name = orderName, orderType = orderType, datePlaced = "2018-01-01" })
         |> Task.perform identity
 
 
@@ -176,22 +176,22 @@ view : Model -> Html Msg
 view model =
     div []
         [ h2 [] [ text (toString (length model.orders)) ]
-        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderToString o.order)) ]) (filterOrders model.orders model.newOrder))
+        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderTypeToString o.orderType)) ]) (filterOrders model.orders model.newOrderType))
         , input [ type_ "text", placeholder "Name", value model.newName, onInput UpdateName ] []
-        , orderButton model.newOrder Eggs
-        , orderButton model.newOrder Honey
-        , button [ onClick RequestAdd, disabled (not <| canAddOrder model.newName model.newOrder) ] [ text "Add" ]
+        , orderButton model.newOrderType Eggs
+        , orderButton model.newOrderType Honey
+        , button [ onClick RequestAdd, disabled (not <| canAddOrder model.newName model.newOrderType) ] [ text "Add" ]
         ]
 
 
 filterOrders : List Order -> Maybe OrderType -> List Order
-filterOrders allOrders maybeSelectedOrder =
-    case maybeSelectedOrder of
+filterOrders allOrders maybeSelectedOrderType =
+    case maybeSelectedOrderType of
         Nothing ->
             allOrders
 
-        Just selectedOrder ->
-            allOrders |> filter (\o -> o.order == selectedOrder)
+        Just selectedOrderType ->
+            allOrders |> filter (\o -> o.orderType == selectedOrderType)
 
 
 orderButton : Maybe OrderType -> OrderType -> Html Msg
@@ -200,7 +200,7 @@ orderButton existingOrderType orderType =
         [ onClick (ToggleOrderType orderType)
         , style (orderButtonStyle existingOrderType (Just orderType))
         ]
-        [ text (orderToString orderType)
+        [ text (orderTypeToString orderType)
         ]
 
 

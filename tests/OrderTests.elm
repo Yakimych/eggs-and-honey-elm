@@ -25,8 +25,8 @@ suite =
                 \_ ->
                     let
                         orderList =
-                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
-                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
+                            [ { id = 1, name = "TestName", orderType = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", orderType = Honey, datePlaced = "2014-01-01" }
                             ]
                     in
                         Expect.equalLists orderList (filterOrders orderList Nothing)
@@ -34,24 +34,24 @@ suite =
                 \_ ->
                     let
                         orderList =
-                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
-                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
-                            , { id = 3, name = "TestName3", order = Eggs, datePlaced = "2014-01-01" }
-                            , { id = 4, name = "TestName4", order = Honey, datePlaced = "2014-01-01" }
+                            [ { id = 1, name = "TestName", orderType = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", orderType = Honey, datePlaced = "2014-01-01" }
+                            , { id = 3, name = "TestName3", orderType = Eggs, datePlaced = "2014-01-01" }
+                            , { id = 4, name = "TestName4", orderType = Honey, datePlaced = "2014-01-01" }
                             ]
                     in
-                        Expect.true "Expected only to find orders for Honey in the list" ((filterOrders orderList (Just Honey)) |> List.all (\o -> o.order == Honey))
+                        Expect.true "Expected only to find orders for Honey in the list" ((filterOrders orderList (Just Honey)) |> List.all (\o -> o.orderType == Honey))
             , test "returns only orders for Eggs if Eggs are selected" <|
                 \_ ->
                     let
                         orderList =
-                            [ { id = 1, name = "TestName", order = Eggs, datePlaced = "2015-01-01" }
-                            , { id = 2, name = "TestName2", order = Honey, datePlaced = "2014-01-01" }
-                            , { id = 3, name = "TestName3", order = Eggs, datePlaced = "2014-01-01" }
-                            , { id = 4, name = "TestName4", order = Honey, datePlaced = "2014-01-01" }
-                            , { id = 5, name = "TestName5", order = Eggs, datePlaced = "2014-01-01" }
+                            [ { id = 1, name = "TestName", orderType = Eggs, datePlaced = "2015-01-01" }
+                            , { id = 2, name = "TestName2", orderType = Honey, datePlaced = "2014-01-01" }
+                            , { id = 3, name = "TestName3", orderType = Eggs, datePlaced = "2014-01-01" }
+                            , { id = 4, name = "TestName4", orderType = Honey, datePlaced = "2014-01-01" }
+                            , { id = 5, name = "TestName5", orderType = Eggs, datePlaced = "2014-01-01" }
                             ]
                     in
-                        Expect.true "Expected only to find orders for Eggs in the list" ((filterOrders orderList (Just Eggs)) |> List.all (\o -> o.order == Eggs))
+                        Expect.true "Expected only to find orders for Eggs in the list" ((filterOrders orderList (Just Eggs)) |> List.all (\o -> o.orderType == Eggs))
             ]
         ]
