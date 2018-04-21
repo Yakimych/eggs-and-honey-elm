@@ -6,7 +6,6 @@ import Html.Events exposing (..)
 import List exposing (length, append, filter)
 import Result.Extra exposing (isOk)
 import Http
-import Task
 import Model exposing (orderTypeToString, OrderType(..))
 import DataProvider exposing (..)
 
@@ -29,12 +28,13 @@ type alias Model =
     { newName : String
     , newOrderType : Maybe OrderType
     , orders : List Model.Order
+    , statusMessage : String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" Nothing [], loadOrders Load )
+    ( Model "" Nothing [] "Loading orders...", loadOrders Load )
 
 
 
@@ -43,7 +43,7 @@ init =
 
 type Msg
     = RequestAdd
-    | ConfirmAdd Model.Order
+    | ConfirmAdd (Result Http.Error Int)
     | Load (Result Http.Error (List Model.Order))
     | UpdateName String
     | ToggleOrderType OrderType
@@ -76,16 +76,19 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok ( newName, newOrderType ) ->
-                    ( model, requestAddOrder newName newOrderType )
+                    ( model, requestAddOrder ConfirmAdd newName newOrderType )
 
-        ConfirmAdd addedOrder ->
-            ( Model "" model.newOrderType (append model.orders [ addedOrder ]), Cmd.none )
+        ConfirmAdd (Ok addedOrderId) ->
+            ( { model | statusMessage = ("Added order: id = " ++ (toString addedOrderId)) }, loadOrders Load )
+
+        ConfirmAdd (Err addError) ->
+            ( { model | statusMessage = toString addError }, Cmd.none )
 
         Load (Ok loadedOrders) ->
-            ( { model | orders = loadedOrders }, Cmd.none )
+            ( { model | orders = loadedOrders, statusMessage = "Loaded orders!" }, Cmd.none )
 
-        Load (Err _) ->
-            ( model, Cmd.none )
+        Load (Err loadError) ->
+            ( { model | statusMessage = toString loadError }, Cmd.none )
 
         UpdateName updatedName ->
             ( { model | newName = updatedName }, Cmd.none )
@@ -97,12 +100,6 @@ update msg model =
 
                 False ->
                     ( { model | newOrderType = Just newOrderType }, Cmd.none )
-
-
-requestAddOrder : String -> OrderType -> Cmd Msg
-requestAddOrder orderName orderType =
-    Task.succeed (ConfirmAdd { id = 1, name = orderName, orderType = orderType, datePlaced = "2018-01-01" })
-        |> Task.perform identity
 
 
 
@@ -127,6 +124,7 @@ view model =
         , orderButton model.newOrderType Eggs
         , orderButton model.newOrderType Honey
         , button [ onClick RequestAdd, disabled (not <| canAddOrder model.newName model.newOrderType) ] [ text "Add" ]
+        , div [] [ text model.statusMessage ]
         ]
 
 
