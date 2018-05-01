@@ -6,17 +6,14 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 
 
-baseUrl =
+ordersUrl : String
+ordersUrl =
     "http://localhost:5000/api/v1/orders"
-
-
-addOrderUrl =
-    baseUrl ++ "/add"
 
 
 loadOrders : (Result Http.Error (List Model.Order) -> msg) -> Cmd msg
 loadOrders callback =
-    Http.send callback <| Http.get baseUrl decodeOrders
+    Http.send callback <| Http.get ordersUrl decodeOrders
 
 
 encodeOrder : String -> OrderType -> Encode.Value
@@ -30,7 +27,7 @@ encodeOrder name orderType =
 requestAddOrder : (Result Http.Error Int -> msg) -> String -> OrderType -> Cmd msg
 requestAddOrder callback orderName orderType =
     Http.send callback <|
-        Http.post addOrderUrl (Http.jsonBody (encodeOrder orderName orderType)) (Decode.field "id" Decode.int)
+        Http.post ordersUrl (Http.jsonBody (encodeOrder orderName orderType)) (Decode.field "id" Decode.int)
 
 
 decodeOrders : Decode.Decoder (List Model.Order)
