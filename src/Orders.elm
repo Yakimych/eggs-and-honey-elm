@@ -1,22 +1,23 @@
-module Orders exposing (..)
+module Orders exposing (Model, Msg(..), canAddOrder, filterOrders, init, main, orderButton, orderButtonStyle, subscriptions, update, validateNewOrder, view)
 
+import Browser
+import DataProvider exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import List exposing (length, append, filter)
-import Result.Extra exposing (isOk)
 import Http
-import Model exposing (orderTypeToString, OrderType(..))
-import DataProvider exposing (..)
+import List exposing (append, concat, filter, length)
+import Model exposing (OrderType(..), orderTypeToString)
+import String exposing (fromInt)
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
-        , view = view
-        , update = update
         , subscriptions = subscriptions
+        , update = update
+        , view = view
         }
 
 
@@ -32,8 +33,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init flags =
     ( Model "" Nothing [] "Loading orders...", loadOrders Load )
 
 
@@ -58,8 +59,18 @@ validateNewOrder name orderType =
         ( _, Nothing ) ->
             Err ()
 
-        ( name, Just orderType ) ->
-            Ok ( name, orderType )
+        ( name1, Just orderType1 ) ->
+            Ok ( name1, orderType1 )
+
+
+isOk : Result a b -> Bool
+isOk result =
+    case result of
+        Ok _ ->
+            True
+
+        Err _ ->
+            False
 
 
 canAddOrder : String -> Maybe OrderType -> Bool
@@ -79,22 +90,22 @@ update msg model =
                     ( model, requestAddOrder ConfirmAdd newName newOrderType )
 
         ConfirmAdd (Ok addedOrderId) ->
-            ( { model | statusMessage = ("Added order: id = " ++ (toString addedOrderId)) }, loadOrders Load )
+            ( { model | statusMessage = "Added order: id = " ++ fromInt addedOrderId }, loadOrders Load )
 
         ConfirmAdd (Err addError) ->
-            ( { model | statusMessage = toString addError }, Cmd.none )
+            ( { model | statusMessage = "Add error" }, Cmd.none )
 
         Load (Ok loadedOrders) ->
             ( { model | orders = loadedOrders, statusMessage = "Loaded orders!" }, Cmd.none )
 
         Load (Err loadError) ->
-            ( { model | statusMessage = toString loadError }, Cmd.none )
+            ( { model | statusMessage = "Load Error" }, Cmd.none )
 
         UpdateName updatedName ->
             ( { model | newName = updatedName }, Cmd.none )
 
         ToggleOrderType newOrderType ->
-            case (Just newOrderType) == model.newOrderType of
+            case Just newOrderType == model.newOrderType of
                 True ->
                     ( { model | newOrderType = Nothing }, Cmd.none )
 
@@ -118,8 +129,8 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h2 [] [ text (toString (length model.orders)) ]
-        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ (orderTypeToString o.orderType)) ]) (filterOrders model.orders model.newOrderType))
+        [ h2 [] [ text (fromInt (length model.orders)) ]
+        , ul [] (List.map (\o -> li [] [ text (o.name ++ " " ++ orderTypeToString o.orderType) ]) (filterOrders model.orders model.newOrderType))
         , input [ type_ "text", placeholder "Name", value model.newName, onInput UpdateName ] []
         , orderButton model.newOrderType Eggs
         , orderButton model.newOrderType Honey
@@ -141,18 +152,21 @@ filterOrders allOrders maybeSelectedOrderType =
 orderButton : Maybe OrderType -> OrderType -> Html Msg
 orderButton existingOrderType orderType =
     button
-        [ onClick (ToggleOrderType orderType)
-        , style (orderButtonStyle existingOrderType (Just orderType))
-        ]
+        (concat
+            [ [ onClick (ToggleOrderType orderType) ]
+            , orderButtonStyle existingOrderType (Just orderType)
+            ]
+        )
         [ text (orderTypeToString orderType)
         ]
 
 
-orderButtonStyle : a -> a -> List ( String, String )
+orderButtonStyle : a -> a -> List (Attribute Msg)
 orderButtonStyle currentOrderType newOrderType =
     if currentOrderType == newOrderType then
-        [ ( "border-color", "red" )
-        , ( "border-width", "2px" )
+        [ style "border-color" "red"
+        , style "border-width" "2px"
         ]
+
     else
         []

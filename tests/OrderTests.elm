@@ -1,10 +1,10 @@
-module OrderTests exposing (..)
+module OrderTests exposing (suite)
 
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
-import Test exposing (..)
 import Model exposing (OrderType(..))
 import Orders exposing (..)
+import Test exposing (..)
 
 
 suite : Test
@@ -30,7 +30,7 @@ suite =
                             , { id = 2, name = "TestName2", orderType = Honey, datePlaced = "2014-01-01" }
                             ]
                     in
-                        Expect.equalLists orderList (filterOrders orderList Nothing)
+                    Expect.equalLists orderList (filterOrders orderList Nothing)
             , test "returns only orders for Honey if Honey is selected" <|
                 \_ ->
                     let
@@ -41,7 +41,7 @@ suite =
                             , { id = 4, name = "TestName4", orderType = Honey, datePlaced = "2014-01-01" }
                             ]
                     in
-                        Expect.true "Expected only to find orders for Honey in the list" ((filterOrders orderList (Just Honey)) |> List.all (\o -> o.orderType == Honey))
+                    Expect.true "Expected only to find orders for Honey in the list" (filterOrders orderList (Just Honey) |> List.all (\o -> o.orderType == Honey))
             , test "returns only orders for Eggs if Eggs are selected" <|
                 \_ ->
                     let
@@ -53,6 +53,6 @@ suite =
                             , { id = 5, name = "TestName5", orderType = Eggs, datePlaced = "2014-01-01" }
                             ]
                     in
-                        Expect.true "Expected only to find orders for Eggs in the list" ((filterOrders orderList (Just Eggs)) |> List.all (\o -> o.orderType == Eggs))
+                    Expect.true "Expected only to find orders for Eggs in the list" (filterOrders orderList (Just Eggs) |> List.all (\o -> o.orderType == Eggs))
             ]
         ]

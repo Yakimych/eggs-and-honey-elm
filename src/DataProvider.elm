@@ -1,9 +1,9 @@
 module DataProvider exposing (loadOrders, requestAddOrder)
 
-import Model exposing (OrderType(..), Order)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Model exposing (Order, OrderType(..))
 
 
 ordersUrl : String
